@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HillarysHairCare.DTOs;
+namespace HillarysHairCare.models.DTOs;
 
 public class CustomerDTO {
     public int Id {get; set;}
