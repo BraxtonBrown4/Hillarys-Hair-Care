@@ -1,3 +1,5 @@
+using HillarysHairCare.models.DTOs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -22,5 +24,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapGet("/styles", (HillarysHairCareDbContext db) => {
+    return db.Stylists.Select(stylist => new StylistDTO {
+            Id = stylist.Id,
+            Name = stylist.Name 
+    });
+});
 
 app.Run();
