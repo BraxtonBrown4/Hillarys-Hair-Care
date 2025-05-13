@@ -7,4 +7,5 @@ public class Stylist {
     [Required]
     public string Name {get; set;}
     public bool IsActive {get; set;}
+    public List<StylistService> StylistServices {get; set;}
 }
