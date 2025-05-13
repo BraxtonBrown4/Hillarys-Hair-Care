@@ -1,4 +1,5 @@
 using HillarysHairCare.models.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,9 +27,26 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapGet("/styles", (HillarysHairCareDbContext db) => {
-    return db.Stylists.Select(stylist => new StylistDTO {
+    return db.Stylists
+    .Include(s => s.StylistServices)
+    .ThenInclude(ss => ss.Service)
+    .Select(stylist => new StylistDTO {
             Id = stylist.Id,
-            Name = stylist.Name 
+            Name = stylist.Name,
+            IsActive = stylist.IsActive,
+            Services = stylist.StylistServices.Select(s => new ServiceDTO {
+                Id = s.Service.Id,
+                Name = s.Service.Name,
+                Price = s.Service.Price
+            }).ToList()
+    });
+});
+
+app.MapGet("/customers", (HillarysHairCareDbContext db) => {
+    return db.Customers.Select(customer => new CustomerDTO {
+            Id = customer.Id,
+            Name = customer.Name,
+            Balance = customer.Balance
     });
 });
 
