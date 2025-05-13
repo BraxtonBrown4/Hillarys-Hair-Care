@@ -14,6 +14,15 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // allows our api endpoints to access the database through Entity Framework Core
 builder.Services.AddNpgsql<HillarysHairCareDbContext>(builder.Configuration["posgresServerString"]);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -26,7 +35,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/styles", (HillarysHairCareDbContext db) => {
+app.UseCors("AllowAll");
+
+app.MapGet("/stylists", (HillarysHairCareDbContext db) => {
     return db.Stylists
     .Include(s => s.StylistServices)
     .ThenInclude(ss => ss.Service)
