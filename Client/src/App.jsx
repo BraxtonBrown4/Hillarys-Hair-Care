@@ -8,9 +8,11 @@ export default function App() {
   const [chosenStylistId, setChosenStylistId] = useState(0)
   const [chosenCustomerId, setChoosenCustomerId] = useState(0)
   const [services, setServices] = useState([])
+  const [editServices, setEditServices] = useState([])
   const [appointments, setAppointments] = useState([])
+  const [chosenAppointment, setChosenAppointment] = useState({})
   const [showModal, setShowModal] = useState(false)
-
+  const [editModal, setEditModal] = useState(false)
 
   const getData = async () => {
     const stylists = await fetch("http://localhost:5000/stylists")
@@ -37,6 +39,60 @@ export default function App() {
       setServices((prev) => prev.filter((service) => service !== value))
     }
   }
+
+  const handleEdit = (e) => {
+     const { checked, value } = e.target
+    if (checked) {
+      setEditServices((prev) => [...prev, value])
+    } else {
+      setEditServices((prev) => prev.filter((service) => service !== value))
+    }
+  }
+  
+  const saveEdit = async(stylist) => {
+    const now = new Date()
+    now.setHours(now.getHours() + 1, 0, 0, 0)
+await Promise.all(
+  chosenAppointment.services.map(service => fetch(`http://localhost:5000/appointmentServices`, {method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ appointmentId: chosenAppointment.id, serviceId: service.id })})))
+
+    const s = {
+      id: chosenAppointment.id,
+      customerId: chosenAppointment.customer.id,
+      stylistId: stylist,
+      Date: now
+    }
+    await editServices.map(editServices => {
+    const ap = {
+      appointmentId: chosenAppointment.id,
+      serviceId: parseInt(editServices),
+    }
+    fetch(`http://localhost:5000/appointmentServices`, {
+      method: "Post",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(ap)
+    })
+    })
+
+    console.log(s)
+    console.log(editServices)
+      await fetch(`http://localhost:5000/appointments/${s.id}`, {
+      method: "Put",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(s)
+  }).then(() => {
+    setChosenAppointment(null)
+    setEditServices([])
+    setEditModal(false)
+    getData()})
+}
 
   const handleSchedule = async () => {
     const now = new Date()
@@ -93,6 +149,39 @@ export default function App() {
         View Appointments
       </button>
       
+        {editModal && (
+          <div className="modal-overlay">
+            <div className="edit-modal">
+              <button className="close-button" onClick={() => setEditModal(false)}>✕</button>
+              <h2 className="modal-title">Edit Appointment</h2>
+              <div><span>customer: {chosenAppointment.customer.name}</span></div>
+              <label className="modal-label">Select a Stylist:</label>
+              <select className="stylist-select" onChange={(e) => setChosenStylistId(e.target.value)} value={chosenStylistId}>
+                <option value={0}>-- Choose a stylist --</option>
+                {stylists.map((stylist) => (
+                  <option key={stylist.id} value={stylist.id}>
+                    {stylist.name}
+                  </option>
+                ))}
+              </select>
+              {chosenStylistId !== 0 && (() => {const stylist = stylists.find((s) => s.id === parseInt(chosenStylistId))
+                  return (
+                    <div className="services-list">
+                      {stylist?.services.map((service) => (
+                        <div className="service-option" key={service.id}>
+                          <label className="service-label">
+                            <input className="service-checkbox" type="checkbox" value={service.id} id={service.id} onChange={handleEdit}/>
+                            {service.name} - ${service.price}
+                          </label>
+                        </div>
+                      ))}
+                      <button onClick={() => {saveEdit(stylist.id)}}>Schedule</button>
+                    </div>
+                  )})()}
+            </div>
+          </div>
+        )}
+
        {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -115,6 +204,11 @@ export default function App() {
                     <p key={idx}>{s.name} – ${s.price}</p>
                   ))}
                   <h3>Total: ${25 + a.services.reduce((t, s) => t + s.price, 0)}</h3>
+                  <div className="button-group">
+                  <button className="action-button edit-button" onClick={() => { setChosenAppointment(a), setEditModal(true), setShowModal(false)}}>✎ Edit</button>
+                  <button className="action-button delete-button" onClick={() => {fetch(`http://localhost:5000/appointments/${a.id}`, {
+                    method: "DELETE"}).then(() => {getData()})}}>🗑️ Delete</button>
+                </div>
                 </div>
               ))}
             </div>
@@ -147,10 +241,11 @@ export default function App() {
                 </div>
               ))
             })()}
-            <button className="close-button" onClick={handleSchedule}>Schedule</button>
+            <button className="" onClick={handleSchedule}>Schedule</button>
             <button className="close-button" onClick={() => setAppointmentModal(false)}>Close</button>
           </div>
         </div>
+        
       )}
     </div>
   )

@@ -172,5 +172,55 @@ app.MapPost("/appointmentServices", (HillarysHairCareDbContext db, AppointmentSe
     }
 });
 
+app.MapDelete("/appointments/{id}", (HillarysHairCareDbContext db, int id) => {
+        Appointment a = db.Appointments.FirstOrDefault(a => a.Id == id);
+        if (a == null) {
+            return Results.BadRequest("jointable already exists");
+        }
+
+    db.Appointments.Remove(a);
+    db.SaveChanges();
+    return Results.Accepted();
+});
+
+app.MapPut("/appointmentServices", (HillarysHairCareDbContext db, AppointmentService da) => {
+    AppointmentService a = db.AppointmentServices.FirstOrDefault(a => a.ServiceId == da.ServiceId && a.AppointmentId == da.AppointmentId);
+
+    if (a == null) {
+        return Results.NotFound();
+    }
+
+    db.AppointmentServices.Remove(a);
+    db.SaveChanges();
+    return Results.Accepted();
+});
+
+app.MapPut("/appointmentServices/{id}", (HillarysHairCareDbContext db, int id, AppointmentService putA) => {
+    AppointmentService appointmentService = db.AppointmentServices.FirstOrDefault(a => a.Id == id);
+
+    if (appointmentService == null) {
+        return Results.NotFound();
+    }
+
+    try
+    {
+        appointmentService.ServiceId = putA.ServiceId;
+        appointmentService.AppointmentId = putA.AppointmentId;
+
+        db.SaveChanges();
+
+        return Results.Ok(new AppointmentServiceDTO
+        {
+            Id = appointmentService.Id,
+            AppointmentId = appointmentService.AppointmentId,
+            ServiceId = appointmentService.ServiceId
+        });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
+
 app.Run();
 
