@@ -148,8 +148,29 @@ app.MapPut("/appointments/{id}", (HillarysHairCareDbContext db, int id, Appointm
     }
 });
 
+app.MapPost("/appointmentServices", (HillarysHairCareDbContext db, AppointmentService appointmentService) => {
+    try
+    {
+        AppointmentService a = db.AppointmentServices.SingleOrDefault(a => a.AppointmentId == appointmentService.AppointmentId && a.ServiceId == appointmentService.Id);
 
+        if (a != null) {
+            return Results.BadRequest("jointable already exists");
+        }
+        db.AppointmentServices.Add(appointmentService);
+        db.SaveChanges();
 
-//post service appointments
+        return Results.Created($"/appointmentServices/{appointmentService.Id}", new AppointmentServiceDTO
+        {
+            Id = appointmentService.Id,
+            AppointmentId = appointmentService.AppointmentId,
+            ServiceId = appointmentService.ServiceId
+        });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
 
 app.Run();
+
