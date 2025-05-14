@@ -7,4 +7,7 @@ public class AppointmentDTO {
     public int CustomerId {get; set;}
     public int StylistId {get; set;}
     public DateTime Date {get; set;}
+    public CustomerDTO? Customer {get; set;}
+    public StylistDTO? Stylist {get; set;}
+    public List<ServiceDTO>? Services {get; set;} 
 }
