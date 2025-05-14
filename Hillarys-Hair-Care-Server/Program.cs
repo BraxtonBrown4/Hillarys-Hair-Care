@@ -105,8 +105,9 @@ app.MapPost("/appointments", (HillarysHairCareDbContext db, Appointment appointm
     {
         db.Appointments.Add(appointment);
         db.SaveChanges();
-        
-        return Results.Created($"/appointments/{appointment.Id}", new AppointmentDTO {
+
+        return Results.Created($"/appointments/{appointment.Id}", new AppointmentDTO
+        {
             Id = appointment.Id,
             Date = appointment.Date,
             StylistId = appointment.StylistId,
@@ -119,10 +120,12 @@ app.MapPost("/appointments", (HillarysHairCareDbContext db, Appointment appointm
     }
 });
 
-app.MapPut("/appointments/{id}", (HillarysHairCareDbContext db, int id, Appointment putA) => {
+app.MapPut("/appointments/{id}", (HillarysHairCareDbContext db, int id, Appointment putA) =>
+{
     Appointment appointment = db.Appointments.FirstOrDefault(a => a.Id == id);
 
-    if (appointment == null) {
+    if (appointment == null)
+    {
         return Results.NotFound();
     }
 
@@ -148,12 +151,14 @@ app.MapPut("/appointments/{id}", (HillarysHairCareDbContext db, int id, Appointm
     }
 });
 
-app.MapPost("/appointmentServices", (HillarysHairCareDbContext db, AppointmentService appointmentService) => {
+app.MapPost("/appointmentServices", (HillarysHairCareDbContext db, AppointmentService appointmentService) =>
+{
     try
     {
         AppointmentService a = db.AppointmentServices.SingleOrDefault(a => a.AppointmentId == appointmentService.AppointmentId && a.ServiceId == appointmentService.Id);
 
-        if (a != null) {
+        if (a != null)
+        {
             return Results.BadRequest("jointable already exists");
         }
         db.AppointmentServices.Add(appointmentService);
@@ -172,21 +177,25 @@ app.MapPost("/appointmentServices", (HillarysHairCareDbContext db, AppointmentSe
     }
 });
 
-app.MapDelete("/appointments/{id}", (HillarysHairCareDbContext db, int id) => {
-        Appointment a = db.Appointments.FirstOrDefault(a => a.Id == id);
-        if (a == null) {
-            return Results.BadRequest("jointable already exists");
-        }
+app.MapDelete("/appointments/{id}", (HillarysHairCareDbContext db, int id) =>
+{
+    Appointment a = db.Appointments.FirstOrDefault(a => a.Id == id);
+    if (a == null)
+    {
+        return Results.BadRequest("jointable already exists");
+    }
 
     db.Appointments.Remove(a);
     db.SaveChanges();
     return Results.Accepted();
 });
 
-app.MapPut("/appointmentServices", (HillarysHairCareDbContext db, AppointmentService da) => {
+app.MapPut("/appointmentServices", (HillarysHairCareDbContext db, AppointmentService da) =>
+{
     AppointmentService a = db.AppointmentServices.FirstOrDefault(a => a.ServiceId == da.ServiceId && a.AppointmentId == da.AppointmentId);
 
-    if (a == null) {
+    if (a == null)
+    {
         return Results.NotFound();
     }
 
@@ -195,10 +204,12 @@ app.MapPut("/appointmentServices", (HillarysHairCareDbContext db, AppointmentSer
     return Results.Accepted();
 });
 
-app.MapPut("/appointmentServices/{id}", (HillarysHairCareDbContext db, int id, AppointmentService putA) => {
+app.MapPut("/appointmentServices/{id}", (HillarysHairCareDbContext db, int id, AppointmentService putA) =>
+{
     AppointmentService appointmentService = db.AppointmentServices.FirstOrDefault(a => a.Id == id);
 
-    if (appointmentService == null) {
+    if (appointmentService == null)
+    {
         return Results.NotFound();
     }
 
@@ -214,6 +225,109 @@ app.MapPut("/appointmentServices/{id}", (HillarysHairCareDbContext db, int id, A
             Id = appointmentService.Id,
             AppointmentId = appointmentService.AppointmentId,
             ServiceId = appointmentService.ServiceId
+        });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
+
+app.MapPost("/customers", (HillarysHairCareDbContext db, Customer c) =>
+{
+    try
+    {
+        db.Customers.Add(c);
+        db.SaveChanges();
+
+        return Results.Created($"/customers/${c.Id}", new CustomerDTO {
+            Id = c.Id,
+            Name = c.Name,
+            Balance = c.Balance
+        });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
+
+app.MapGet("/services", (HillarysHairCareDbContext db) => {
+    return db.Services.Select(service => new ServiceDTO
+    {
+        Id = service.Id,
+        Name = service.Name,
+        Price = service.Price
+    });
+});
+
+app.MapPost("/stylistservices", (HillarysHairCareDbContext db, StylistService ss) => {
+    try
+    {
+        StylistService existing = db.StylistServices.SingleOrDefault(s => s.StylistId == ss.StylistId && s.ServiceId == ss.ServiceId);
+
+        if (existing != null)
+        {
+            return Results.BadRequest("StylistService already exists");
+        }
+
+        db.StylistServices.Add(ss);
+        db.SaveChanges();
+
+        return Results.Created($"/stylistservices/{ss.Id}", new StylistServiceDTO
+        {
+            Id = ss.Id,
+            StylistId = ss.StylistId,
+            ServiceId = ss.ServiceId
+        });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
+
+app.MapPost("/stylists", (HillarysHairCareDbContext db, Stylist stylist) =>
+{
+    try
+    {
+        db.Stylists.Add(stylist);
+        db.SaveChanges();
+
+        return Results.Created($"/stylists/{stylist.Id}", new StylistDTO
+        {
+            Id = stylist.Id,
+            Name = stylist.Name,
+            IsActive = stylist.IsActive
+        });
+    }
+    catch (DbUpdateException)
+    {
+        return Results.BadRequest("Invalid data submitted");
+    }
+});
+
+app.MapPut("/stylists/{id}", (HillarysHairCareDbContext db, int id, Stylist putStylist) =>
+{
+    Stylist stylist = db.Stylists.FirstOrDefault(s => s.Id == id);
+
+    if (stylist == null)
+    {
+        return Results.NotFound();
+    }
+
+    try
+    {
+        stylist.Name = putStylist.Name;
+        stylist.IsActive = putStylist.IsActive;
+
+        db.SaveChanges();
+
+        return Results.Ok(new StylistDTO
+        {
+            Id = stylist.Id,
+            Name = stylist.Name,
+            IsActive = stylist.IsActive
         });
     }
     catch (DbUpdateException)
